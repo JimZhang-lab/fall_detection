@@ -1,0 +1,68 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Python caches and virtual environments
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+venv/
+env/
+ENV/
+
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Training/runtime outputs
+fall_detection/runs/
+fall_detection/outputs/
+*.log
+
+# Large local data assets. Keep these on disk, but do not push to Git.
+fall_detection/data/
+
+# Model weights and exported inference engines
+fall_detection/assets/**/*.pt
+fall_detection/assets/**/*.pth
+fall_detection/assets/**/*.onnx
+fall_detection/assets/**/*.engine
+fall_detection/assets/**/*.xml
+fall_detection/assets/**/*.bin
+fall_detection/assets/**/*.tflite
+fall_detection/assets/**/*.mlpackage/
+
+# Historical experiments and third-party source snapshots
+fall_detection/archive/
+
+# Research and process documents; root README.md remains the delivery document.
+fall_detection/docs/
+fall_detection/README.md
+
+# Media generated during local experiments
+*.mp4
+*.avi
+*.mov
+*.mkv
+*.jpg
+*.jpeg
+*.png
+*.bmp
+*.webp
+
+# Python packaging/build artifacts
+build/
+dist/
+*.egg-info/
+.DS_Store

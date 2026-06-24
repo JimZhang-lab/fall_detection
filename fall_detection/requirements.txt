@@ -1,0 +1,13 @@
+# Recommended Python for deployment: 3.11.x or 3.12.x
+# Supported project range: Python 3.10-3.12
+#
+# For NVIDIA GPU training/inference, install the CUDA-enabled PyTorch wheel
+# from the official PyTorch selector first, then run:
+#   pip install -r requirements.txt
+
+torch>=2.3.0,<3.0
+torchvision>=0.18.0,<1.0
+ultralytics>=8.4.76,<9.0
+opencv-python>=4.10.0,<5.0
+PyQt5>=5.15.10,<5.16
+numpy>=1.26.0,<3.0
