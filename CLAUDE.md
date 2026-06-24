@@ -21,6 +21,8 @@ Use these files first:
 - Do not commit local datasets, trained weights, inference outputs, training runs, archived experiments, or local research documents.
 - The `.gitignore` intentionally excludes data, model weights, outputs, runs, archive directories, and docs.
 - Do not delete datasets or model assets from disk unless the user explicitly asks.
+- Keep task-boundary and repository-hygiene notes here or in `AGENTS.md`; do not put "do not delete", "do not commit", or similar agent instructions in `README.md`.
+- Keep `README.md` focused on user-facing setup, inference, training, hardware, and troubleshooting.
 
 ## Standard Commands
 

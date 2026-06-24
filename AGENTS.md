@@ -17,7 +17,9 @@ Main entry points:
 2. Do not commit large data, model files, generated outputs, archived experiments, or local research documents. The `.gitignore` intentionally excludes `fall_detection/data/`, `fall_detection/assets/**/*.pt`, `fall_detection/outputs/`, `fall_detection/runs/`, `fall_detection/archive/`, and `fall_detection/docs/`.
 3. Keep root-level documentation consolidated in `README.md`.
 4. Local research and project notes may stay in `fall_detection/docs/`, but they should not be committed.
-5. Prefer small, focused changes that preserve the current project layout.
+5. Keep agent boundaries, repository hygiene rules, and "do not delete/do not commit" instructions in `AGENTS.md` or `CLAUDE.md`, not in `README.md`.
+6. `README.md` should stay user-facing: project purpose, environment, inference, training, hardware, and common operational troubleshooting.
+7. Prefer small, focused changes that preserve the current project layout.
 
 ## Common Commands
 

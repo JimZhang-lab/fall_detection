@@ -1,6 +1,6 @@
 # 跌倒检测项目交付说明
 
-本项目已经将跌倒检测的训练代码、推理代码、模型权重、训练数据、标注数据和测试素材统一整理到：
+本项目将跌倒检测的训练代码、推理代码和配置统一整理到：
 
 ```text
 fall_detection/
@@ -33,9 +33,7 @@ fall_detection/
 ├── training/                  # 训练辅助脚本
 ├── assets/                    # 预训练模型和已训练模型
 ├── data/                      # 训练数据、标注数据和样例素材
-├── outputs/                   # 推理输出结果
-├── docs/                      # 本地调研文档，默认不提交到 Git
-└── archive/                   # 旧版实验和历史代码归档
+└── outputs/                   # 推理输出结果
 ```
 
 ## 2. 环境依赖
@@ -238,7 +236,7 @@ my-fall-model/best.pt
 
 ## 6. YOLO26 训练说明
 
-如果后续要尝试 YOLO26，建议先训练轻量版 `YOLO26n`，不要直接上大模型。
+如果后续要尝试 YOLO26，建议先训练轻量版 `YOLO26n`，再根据验证结果考虑更大模型。
 
 训练 YOLO26n：
 
@@ -259,7 +257,7 @@ python train.py --model yolo26n.pt --epochs 50 --imgsz 640 --batch 8 --device 0 
 python train.py --model yolo26s.pt --epochs 50 --imgsz 640 --batch 8 --device 0 --name fall_yolo26s --export-name fall-yolo26s
 ```
 
-注意：
+迁移到 YOLO26 前建议完成：
 
 1. YOLO26 需要目标测试机/训练机安装的 `ultralytics` 版本支持对应模型。
 2. YOLO26 不能直接复用旧 YOLOv8 权重，需要重新训练。
@@ -303,38 +301,14 @@ fall_detection/outputs/
 
 推理输出结果。
 
-```text
-fall_detection/docs/
-```
+## 8. 常见问题
 
-本地调研文档目录，默认不提交到 Git。对外交付说明以根目录 `README.md` 为准。
+如果界面模型列表为空，请确认模型文件位于：
 
 ```text
-fall_detection/archive/
+fall_detection/assets/<模型名称>/best.pt
 ```
 
-旧版 demo、两阶段实验、SlowFast/GAVD 等历史代码归档。主流程不依赖这里。
+如果训练时显存不足，优先降低 `--batch`，其次降低 `--imgsz`。
 
-## 8. 重要注意事项
-
-1. 不要删除 `fall_detection/data/`，这里包含训练数据和标注资产。
-2. 不要删除 `fall_detection/assets/yolov8n.pt`，无人帧筛除功能需要它。
-3. 当前主训练类别是 `fall`，类别编号为 `0`。
-4. 如果新增训练数据，图片和标签文件名需要一一对应。
-5. 如果训练爆显存，优先降低 `--batch`，其次降低 `--imgsz`。
-6. 如果 `torch.cuda.is_available()` 为 `False`，请重新安装匹配 CUDA 的 PyTorch。
-
-## 9. Git 提交范围
-
-本仓库对外交付只保留代码、配置、根目录 `README.md`、`AGENTS.md` 和 `CLAUDE.md`。
-
-以下内容保留在本地，但默认不提交到 Git：
-
-```text
-fall_detection/data/
-fall_detection/assets/**/*.pt
-fall_detection/outputs/
-fall_detection/runs/
-fall_detection/archive/
-fall_detection/docs/
-```
+如果 `torch.cuda.is_available()` 为 `False`，请重新安装与显卡 CUDA 版本匹配的 PyTorch。
