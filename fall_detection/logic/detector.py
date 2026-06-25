@@ -3,6 +3,7 @@ import platform
 import subprocess
 import time
 from datetime import datetime, timedelta
+from pathlib import Path
 
 import cv2
 import torch
@@ -12,8 +13,26 @@ from logic.utils import draw_boxes_on_image, is_frame_static
 
 
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
-PERSON_MODEL_PATH = os.path.join("assets", "yolov8n.pt")
-person_model = YOLO(PERSON_MODEL_PATH).to(DEVICE)
+BASE_DIR = Path(__file__).resolve().parents[1]
+ASSETS_DIR = BASE_DIR / "assets"
+OUTPUTS_DIR = BASE_DIR / "outputs"
+PERSON_MODEL_PATH = ASSETS_DIR / "yolov8n.pt"
+_person_model = None
+_fall_model_cache = {}
+
+
+def get_person_model():
+    global _person_model
+    if _person_model is None:
+        _person_model = YOLO(str(PERSON_MODEL_PATH)).to(DEVICE)
+    return _person_model
+
+
+def get_fall_model(model_path):
+    resolved_path = str(Path(model_path).resolve())
+    if resolved_path not in _fall_model_cache:
+        _fall_model_cache[resolved_path] = YOLO(resolved_path).to(DEVICE)
+    return _fall_model_cache[resolved_path]
 
 
 def get_next_file_base(output_dir):
@@ -63,10 +82,11 @@ def detect_fall(
     use_filter_static=False,
     log_area=None,
     frame_interval=1,
+    preview_result=True,
 ):
     start_time = time.time()
-    fall_model = YOLO(model_path).to(DEVICE)
-    output_dir = os.path.join("outputs", output_subdir)
+    fall_model = get_fall_model(model_path)
+    output_dir = OUTPUTS_DIR / (Path(output_subdir).name or "default")
     base_name = get_next_file_base(output_dir)
     log_path = os.path.join(output_dir, f"{base_name}.txt")
     is_video = path.lower().endswith((".mp4", ".avi", ".mov", ".mkv"))
@@ -87,9 +107,10 @@ def detect_fall(
             use_filter_static=use_filter_static,
             log_area=log_area,
             frame_interval=frame_interval,
+            preview_result=preview_result,
         )
 
-    return detect_image(path, fall_model, output_dir, base_name, log_path, log_lines, start_time, log_area)
+    return detect_image(path, fall_model, output_dir, base_name, log_path, log_lines, start_time, log_area, preview_result)
 
 
 def detect_video(
@@ -105,8 +126,10 @@ def detect_video(
     use_filter_static,
     log_area,
     frame_interval,
+    preview_result,
 ):
-    cap = cv2.VideoCapture(path)
+    frame_interval = max(1, int(frame_interval))
+    cap = cv2.VideoCapture(str(path))
     if not cap.isOpened():
         return None
 
@@ -116,10 +139,15 @@ def detect_video(
         return None
 
     fps, frame_count, duration_sec = metadata
+    fps = fps if fps and fps > 0 else 30
     width = int(cap.get(cv2.CAP_PROP_FRAME_WIDTH))
     height = int(cap.get(cv2.CAP_PROP_FRAME_HEIGHT))
+    writer_fps = fps if fps and fps > 0 else 30
     out_video_path = os.path.join(output_dir, f"{base_name}.mp4")
-    writer = cv2.VideoWriter(out_video_path, cv2.VideoWriter_fourcc(*"mp4v"), fps, (width, height))
+    writer = cv2.VideoWriter(out_video_path, cv2.VideoWriter_fourcc(*"mp4v"), writer_fps, (width, height))
+    if not writer.isOpened():
+        cap.release()
+        return None
 
     log_lines.extend(
         [
@@ -154,7 +182,7 @@ def detect_video(
 
         if use_filter_person and (frame_index - last_person_check >= fps):
             last_person_check = frame_index
-            result_person = person_model(frame, verbose=False)[0]
+            result_person = get_person_model()(frame, verbose=False)[0]
             has_person = any(int(b.cls[0]) == 0 for b in result_person.boxes)
 
             if not has_person:
@@ -207,12 +235,13 @@ def detect_video(
     with open(log_path, "w", encoding="utf-8") as f:
         f.write("\n".join(log_lines))
 
-    play_video(out_video_path)
+    if preview_result:
+        play_video(out_video_path)
     return out_video_path
 
 
-def detect_image(path, fall_model, output_dir, base_name, log_path, log_lines, start_time, log_area):
-    image = cv2.imread(path)
+def detect_image(path, fall_model, output_dir, base_name, log_path, log_lines, start_time, log_area, preview_result):
+    image = cv2.imread(str(path))
     if image is None:
         return None
 
@@ -242,7 +271,8 @@ def detect_image(path, fall_model, output_dir, base_name, log_path, log_lines, s
     if log_area:
         log_area.append(f"检测完成，总耗时 {elapsed:.2f} 秒")
 
-    open_result(out_path)
+    if preview_result:
+        open_result(out_path)
     return out_path
 
 

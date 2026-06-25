@@ -180,7 +180,7 @@ npm run dev
 - 📁 文件拖拽上传（图像和视频）
 - 🤖 多模型支持
 - 🎯 检测选项配置（无人帧筛除、静态帧筛除、帧间隔）
-- 📊 实时检测日志显示
+- 📊 检测日志显示
 - 📥 结果文件下载
 
 详见 [web/README.md](web/README.md)
@@ -358,3 +358,4 @@ fall_detection/assets/<模型名称>/best.pt
 如果训练时显存不足，优先降低 `--batch`，其次降低 `--imgsz`。
 
 如果 `torch.cuda.is_available()` 为 `False`，请重新安装与显卡 CUDA 版本匹配的 PyTorch。
+

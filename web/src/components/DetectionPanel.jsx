@@ -13,7 +13,6 @@ import {
   Col,
   Space,
   message,
-  Drawer,
 } from 'antd';
 import {
   UploadOutlined,
@@ -36,6 +35,7 @@ export default function DetectionPanel() {
   const [logs, setLogs] = useState([]);
   const [fileMetadata, setFileMetadata] = useState(null);
   const [detectionResult, setDetectionResult] = useState(null);
+  const [uploadFileList, setUploadFileList] = useState([]);
 
   // Detection options
   const [useFilterPerson, setUseFilterPerson] = useState(false);
@@ -70,13 +70,20 @@ export default function DetectionPanel() {
       const response = await axios.post(`${API_BASE}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
       });
-      setUploadedFile(response.data.filename);
+      setUploadedFile({
+        fileId: response.data.file_id,
+        name: response.data.original_filename || response.data.filename,
+      });
       setFileMetadata(response.data.metadata);
-      setLogs([`✓ File uploaded: ${response.data.filename}`]);
+      setLogs([`✓ File uploaded: ${response.data.original_filename || response.data.filename}`]);
       setDetectionResult(null);
       message.success('File uploaded successfully');
     } catch (error) {
-      message.error('Upload failed: ' + error.response?.data?.error || error.message);
+      setUploadedFile(null);
+      setFileMetadata(null);
+      setDetectionResult(null);
+      setUploadFileList([]);
+      message.error('Upload failed: ' + (error.response?.data?.error || error.message));
     } finally {
       setUploading(false);
     }
@@ -99,7 +106,7 @@ export default function DetectionPanel() {
 
     try {
       const response = await axios.post(`${API_BASE}/detect`, {
-        filepath: `/Users/jim/Desktop/extensiveWork/project/cte/inspect_issue/fall_detection/uploads/${uploadedFile}`,
+        file_id: uploadedFile.fileId,
         model_name: selectedModel,
         use_filter_person: useFilterPerson,
         use_filter_static: useFilterStatic,
@@ -107,15 +114,23 @@ export default function DetectionPanel() {
       });
 
       if (response.data.success) {
-        setDetectionResult(response.data.result_path);
-        setLogs(response.data.logs);
+        setDetectionResult({
+          resultPath: response.data.result_path,
+          downloadUrl: response.data.download_url,
+        });
+        setLogs(response.data.logs || []);
         message.success('Detection completed successfully');
       } else {
-        setLogs(response.data.logs);
+        setLogs(response.data.logs || []);
         message.error('Detection failed: ' + response.data.error);
       }
     } catch (error) {
-      message.error('Detection error: ' + error.message);
+      const errorMessage = error.response?.data?.error || error.message;
+      const errorLogs = error.response?.data?.logs;
+      if (errorLogs) {
+        setLogs(errorLogs);
+      }
+      message.error('Detection error: ' + errorMessage);
     } finally {
       setDetecting(false);
     }
@@ -126,17 +141,24 @@ export default function DetectionPanel() {
     setFileMetadata(null);
     setLogs([]);
     setDetectionResult(null);
+    setUploadFileList([]);
   };
 
   const uploadProps = {
     maxCount: 1,
     accept: '.jpg,.jpeg,.png,.mp4,.avi,.mov,.mkv',
+    fileList: uploadFileList,
+    onRemove: () => {
+      handleClear();
+      return true;
+    },
     beforeUpload: (file) => {
       const maxSize = 500 * 1024 * 1024; // 500MB
       if (file.size > maxSize) {
         message.error('File size exceeds 500MB limit');
         return false;
       }
+      setUploadFileList([file]);
       handleFileUpload(file);
       return false; // Prevent default upload
     },
@@ -165,7 +187,7 @@ export default function DetectionPanel() {
 
               {uploadedFile && (
                 <Alert
-                  message={`已上传: ${uploadedFile}`}
+                  message={`已上传: ${uploadedFile.name}`}
                   type="success"
                   showIcon
                   className="mt-3"
@@ -232,7 +254,7 @@ export default function DetectionPanel() {
                     min={1}
                     max={30}
                     value={frameInterval}
-                    onChange={setFrameInterval}
+                    onChange={(value) => setFrameInterval(value || 1)}
                     style={{ width: '100%' }}
                   />
                   <p className="text-xs text-gray-500 mt-1">推荐设置为 2，以提升效率 (Recommended: 2)</p>
@@ -265,8 +287,8 @@ export default function DetectionPanel() {
                     icon={<DownloadOutlined />}
                     onClick={() => {
                       const link = document.createElement('a');
-                      link.href = `/api/download/${detectionResult}`;
-                      link.download = detectionResult.split('/').pop();
+                      link.href = detectionResult.downloadUrl;
+                      link.download = detectionResult.resultPath.split('/').pop();
                       link.click();
                     }}
                   >

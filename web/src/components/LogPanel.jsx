@@ -1,5 +1,6 @@
 import React from 'react';
 import { Empty } from 'antd';
+import PropTypes from 'prop-types';
 
 export default function LogPanel({ logs }) {
   return (
@@ -39,3 +40,7 @@ export default function LogPanel({ logs }) {
     </div>
   );
 }
+
+LogPanel.propTypes = {
+  logs: PropTypes.arrayOf(PropTypes.string).isRequired,
+};

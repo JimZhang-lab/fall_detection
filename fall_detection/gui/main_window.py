@@ -1,4 +1,5 @@
 import os
+from pathlib import Path
 
 from PyQt5.QtWidgets import (
     QCheckBox,
@@ -15,6 +16,10 @@ from PyQt5.QtWidgets import (
 )
 
 from logic.detector import detect_fall
+
+
+BASE_DIR = Path(__file__).resolve().parents[1]
+ASSETS_DIR = BASE_DIR / "assets"
 
 
 class MainWindow(QMainWindow):
@@ -75,11 +80,10 @@ class MainWindow(QMainWindow):
         self.detect_button.clicked.connect(self.start_detection)
 
     def populate_model_selector(self):
-        assets_dir = "assets"
-        if not os.path.exists(assets_dir):
+        if not ASSETS_DIR.exists():
             return
-        for folder in sorted(os.listdir(assets_dir)):
-            model_path = os.path.join(assets_dir, folder, "best.pt")
+        for folder in sorted(os.listdir(ASSETS_DIR)):
+            model_path = ASSETS_DIR / folder / "best.pt"
             if os.path.isfile(model_path):
                 self.model_selector.addItem(f"{folder}/best.pt")
 
@@ -104,14 +108,14 @@ class MainWindow(QMainWindow):
             self.log_area.append("请先选择模型。")
             return
 
-        model_path = os.path.join("assets", model_name)
+        model_path = ASSETS_DIR / model_name
         output_subdir = model_name.split("/")[0]
         self.log_area.clear()
         self.log_area.append("开始检测...\n")
 
         result_path = detect_fall(
             path=self.file_path,
-            model_path=model_path,
+            model_path=str(model_path),
             output_subdir=output_subdir,
             use_filter_person=self.check_person.isChecked(),
             use_filter_static=self.check_static.isChecked(),

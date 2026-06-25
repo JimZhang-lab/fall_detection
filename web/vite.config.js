@@ -3,6 +3,17 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          react: ['react', 'react-dom'],
+          antd: ['antd', '@ant-design/icons'],
+          utilities: ['axios', 'prop-types'],
+        },
+      },
+    },
+  },
   server: {
     port: 3000,
     proxy: {
