@@ -178,6 +178,8 @@ npm run dev
 
 启动后端 API 后，可以用下面命令快速验证上传、检测和下载流程。
 
+API 上传缓存会保存到 `fall_detection/outputs/uploads/`，检测结果和日志会保存到 `fall_detection/outputs/<模型名称>/`。
+
 以下示例默认后端运行在：
 
 ```bash
@@ -230,7 +232,8 @@ cat /tmp/fall-detect-image.json
 ```bash
 DOWNLOAD_URL=$(python -c 'import json; print(json.load(open("/tmp/fall-detect-image.json"))["download_url"])')
 
-curl -L "$API_BASE$DOWNLOAD_URL" -o /tmp/fall-detect-result.jpg
+curl -L "$API_BASE$DOWNLOAD_URL" \
+  -o /Users/jim/Desktop/extensiveWork/project/cte/inspect_issue/fall_detection/outputs/curl-fall-detect-result.jpg
 ```
 
 上传样例视频：
@@ -267,7 +270,8 @@ cat /tmp/fall-detect-video.json
 ```bash
 DOWNLOAD_URL=$(python -c 'import json; print(json.load(open("/tmp/fall-detect-video.json"))["download_url"])')
 
-curl -L "$API_BASE$DOWNLOAD_URL" -o /tmp/fall-detect-result.mp4
+curl -L "$API_BASE$DOWNLOAD_URL" \
+  -o /Users/jim/Desktop/extensiveWork/project/cte/inspect_issue/fall_detection/outputs/curl-fall-detect-result.mp4
 ```
 
 ### Web UI 功能

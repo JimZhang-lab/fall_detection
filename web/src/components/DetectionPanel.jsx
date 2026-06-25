@@ -36,6 +36,7 @@ export default function DetectionPanel() {
   const [fileMetadata, setFileMetadata] = useState(null);
   const [detectionResult, setDetectionResult] = useState(null);
   const [uploadFileList, setUploadFileList] = useState([]);
+  const [preloadStatus, setPreloadStatus] = useState(null);
 
   // Detection options
   const [useFilterPerson, setUseFilterPerson] = useState(false);
@@ -45,7 +46,21 @@ export default function DetectionPanel() {
   // Load available models on mount
   useEffect(() => {
     loadModels();
+    loadPreloadStatus();
+    
+    // Poll preload status every 2 seconds until ready
+    const interval = setInterval(loadPreloadStatus, 2000);
+    return () => clearInterval(interval);
   }, []);
+
+  const loadPreloadStatus = async () => {
+    try {
+      const response = await axios.get(`${API_BASE}/preload-status`);
+      setPreloadStatus(response.data);
+    } catch (error) {
+      // Silently fail, preload-status is optional
+    }
+  };
 
   const loadModels = async () => {
     try {
@@ -174,6 +189,23 @@ export default function DetectionPanel() {
             className="shadow-lg"
             headStyle={{ background: '#1890ff', color: 'white' }}
           >
+            {/* Preload Status Alert */}
+            {preloadStatus && preloadStatus.status && (
+              <Alert
+                message={`Model Preloading: ${preloadStatus.message}`}
+                type={
+                  preloadStatus.status === 'ready'
+                    ? 'success'
+                    : preloadStatus.status === 'error'
+                    ? 'error'
+                    : 'info'
+                }
+                showIcon
+                className="mb-6"
+                closable
+              />
+            )}
+
             {/* File Upload Section */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold mb-3">1. 选择文件 (Select File)</h3>
@@ -219,7 +251,10 @@ export default function DetectionPanel() {
               >
                 {models.map((model) => (
                   <Select.Option key={model.path} value={model.path}>
-                    {model.name} ({model.path})
+                    <span>
+                      {model.name} {model.cached && <span className="text-green-600">[已缓存]</span>}
+                    </span>
+                    <div className="text-xs text-gray-500">({model.path})</div>
                   </Select.Option>
                 ))}
               </Select>

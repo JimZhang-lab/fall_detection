@@ -1,6 +1,7 @@
 """Flask API for fall detection inference."""
 
 import os
+import threading
 from pathlib import Path
 from urllib.parse import quote
 from uuid import uuid4
@@ -8,16 +9,24 @@ from uuid import uuid4
 from flask import Flask, request, jsonify, send_file
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
+from ultralytics import YOLO
+import torch
 
 from logic.detector import detect_fall, get_video_metadata
 
 app = Flask(__name__)
 
+# Model cache and preloading
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
+MODEL_CACHE = {}  # Cache for loaded models
+PRELOAD_STATUS = {"status": "idle", "model": None, "message": ""}
+PRELOAD_LOCK = threading.Lock()  # Thread-safe access to preload status
+
 # Configuration
 BASE_DIR = Path(__file__).resolve().parent
-UPLOAD_FOLDER = BASE_DIR / "uploads"
 ASSETS_DIR = BASE_DIR / "assets"
 OUTPUTS_DIR = BASE_DIR / "outputs"
+UPLOAD_FOLDER = OUTPUTS_DIR / "uploads"
 ALLOWED_EXTENSIONS = {"jpg", "jpeg", "png", "mp4", "avi", "mov", "mkv"}
 VIDEO_EXTENSIONS = {".mp4", ".avi", ".mov", ".mkv"}
 MAX_FILE_SIZE = 1024 * 1024 * 500  # 500MB
@@ -35,8 +44,8 @@ CORS(
     },
 )
 
-UPLOAD_FOLDER.mkdir(exist_ok=True)
 OUTPUTS_DIR.mkdir(exist_ok=True)
+UPLOAD_FOLDER.mkdir(exist_ok=True)
 app.config["UPLOAD_FOLDER"] = str(UPLOAD_FOLDER)
 app.config["MAX_CONTENT_LENGTH"] = MAX_FILE_SIZE
 
@@ -76,6 +85,65 @@ def resolve_upload_path(file_ref):
     return resolve_child_path(UPLOAD_FOLDER, filename)
 
 
+def load_model(model_path_str):
+    """Load a YOLO model into the cache."""
+    model_path_str = str(model_path_str)
+    if model_path_str in MODEL_CACHE:
+        return MODEL_CACHE[model_path_str]
+    
+    try:
+        model = YOLO(model_path_str).to(DEVICE)
+        MODEL_CACHE[model_path_str] = model
+        return model
+    except Exception as e:
+        raise RuntimeError(f"Failed to load model: {str(e)}")
+
+
+def get_available_models():
+    """Get list of available models."""
+    models = []
+    if ASSETS_DIR.exists():
+        for folder in sorted(ASSETS_DIR.iterdir()):
+            model_path = folder / "best.pt"
+            if folder.is_dir() and model_path.is_file():
+                models.append((folder.name, str(model_path)))
+    return models
+
+
+def preload_model_background():
+    """Preload the first available model in background."""
+    with PRELOAD_LOCK:
+        PRELOAD_STATUS["status"] = "loading"
+        PRELOAD_STATUS["message"] = "Initializing model preloader..."
+    
+    try:
+        models = get_available_models()
+        if not models:
+            with PRELOAD_LOCK:
+                PRELOAD_STATUS["status"] = "idle"
+                PRELOAD_STATUS["message"] = "No models found"
+            return
+        
+        model_name, model_path = models[0]
+        
+        with PRELOAD_LOCK:
+            PRELOAD_STATUS["status"] = "loading"
+            PRELOAD_STATUS["message"] = f"Preloading model: {model_name}"
+        
+        # Load the model
+        load_model(model_path)
+        
+        with PRELOAD_LOCK:
+            PRELOAD_STATUS["status"] = "ready"
+            PRELOAD_STATUS["model"] = model_name
+            PRELOAD_STATUS["message"] = f"Model preloaded: {model_name}"
+            
+    except Exception as e:
+        with PRELOAD_LOCK:
+            PRELOAD_STATUS["status"] = "error"
+            PRELOAD_STATUS["message"] = f"Preload error: {str(e)}"
+
+
 def resolve_model_path(model_name):
     """Resolve a model name to a model file under assets."""
     model_path = resolve_child_path(ASSETS_DIR, model_name)
@@ -112,7 +180,15 @@ class LogCapture:
 @app.route("/api/health", methods=["GET"])
 def health():
     """Health check endpoint."""
-    return jsonify({"status": "ok", "message": "Fall Detection API is running"})
+    with PRELOAD_LOCK:
+        preload_status = dict(PRELOAD_STATUS)
+    
+    return jsonify({
+        "status": "ok",
+        "message": "Fall Detection API is running",
+        "device": DEVICE,
+        "preload": preload_status
+    })
 
 
 @app.route("/api/models", methods=["GET"])
@@ -124,14 +200,23 @@ def get_models():
         for folder in sorted(ASSETS_DIR.iterdir()):
             model_path = folder / "best.pt"
             if folder.is_dir() and model_path.is_file():
+                # Check if model is in cache
+                is_cached = str(model_path) in MODEL_CACHE
                 models.append(
                     {
                         "name": folder.name,
                         "path": f"{folder.name}/best.pt",
+                        "cached": is_cached,
                     }
                 )
+    
+    with PRELOAD_LOCK:
+        preload_status = dict(PRELOAD_STATUS)
 
-    return jsonify({"models": models})
+    return jsonify({
+        "models": models,
+        "preload": preload_status
+    })
 
 
 @app.route("/api/upload", methods=["POST"])
@@ -215,6 +300,21 @@ def detect():
 
     # Prepare log capture
     log_capture = LogCapture()
+    
+    # Try to use cached model if available, otherwise load it
+    try:
+        if str(model_path) in MODEL_CACHE:
+            log_capture.append("✓ Using cached model")
+        else:
+            log_capture.append("Loading model (first use, will be cached)...")
+            load_model(str(model_path))
+            log_capture.append("✓ Model loaded and cached")
+    except Exception as e:
+        return jsonify({
+            "success": False,
+            "error": f"Model loading failed: {str(e)}",
+            "logs": log_capture.get_logs(),
+        }), 500
 
     # Run detection
     try:
@@ -276,12 +376,34 @@ def download_file(filename):
     return send_file(filepath, as_attachment=True)
 
 
+@app.route("/api/preload-status", methods=["GET"])
+def get_preload_status():
+    """Get model preload status."""
+    with PRELOAD_LOCK:
+        status = dict(PRELOAD_STATUS)
+    
+    # Add cache info
+    cached_models = list(MODEL_CACHE.keys())
+    status["cached_models_count"] = len(cached_models)
+    
+    return jsonify(status)
+
+
 @app.errorhandler(413)
 def request_entity_too_large(error):
     """Handle file too large error."""
     return jsonify({"error": "File too large"}), 413
 
 
+def startup_model_preloader():
+    """Start model preloader in background thread on app startup."""
+    preload_thread = threading.Thread(target=preload_model_background, daemon=True)
+    preload_thread.start()
+
+
 if __name__ == "__main__":
+    # Start model preloader in background
+    startup_model_preloader()
+    
     debug = os.getenv("FLASK_DEBUG", "").lower() in {"1", "true", "yes"}
     app.run(debug=debug, host="127.0.0.1", port=5000)

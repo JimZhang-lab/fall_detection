@@ -28,7 +28,6 @@ ENV/
 # Training/runtime outputs
 fall_detection/runs/
 fall_detection/outputs/
-fall_detection/uploads/
 *.log
 
 # Large local data assets. Keep these on disk, but do not push to Git.
