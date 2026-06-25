@@ -1,0 +1,22 @@
+.detection-panel {
+  width: 100%;
+}
+
+.detection-panel .ant-card {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.detection-panel .ant-upload-dragger {
+  border-radius: 6px;
+  transition: all 0.3s ease;
+}
+
+.detection-panel .ant-upload-dragger:hover {
+  border-color: #40a9ff;
+  background-color: #f5f7fa;
+}
+
+.detection-panel .ant-alert {
+  border-radius: 6px;
+}

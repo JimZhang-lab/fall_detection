@@ -134,17 +134,63 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 如果只能选一张卡：优先推荐 RTX 3060 12GB。
 ```
 
-## 4. 启动推理
+## 4. Web UI 推理（推荐）
 
-进入项目目录：
+项目提供了现代化的 Web 界面，使用 React + Ant Design + Tailwind CSS 构建。
+
+### 快速启动
+
+**步骤 1**：进入项目目录并安装依赖
 
 ```bash
 cd fall_detection
+pip install -r requirements.txt
 ```
 
-启动图形界面：
+**步骤 2**：启动后端 API
+
+在一个终端窗口运行：
 
 ```bash
+cd fall_detection
+python api.py
+```
+
+后端 API 将在 `http://127.0.0.1:5000` 运行
+
+**步骤 3**：启动前端应用
+
+在另一个终端窗口运行：
+
+```bash
+cd web
+npm install    # 首次运行时安装依赖
+npm run dev
+```
+
+前端应用将在 `http://localhost:3000` 运行
+
+**步骤 4**：打开浏览器
+
+访问 [http://localhost:3000](http://localhost:3000) 开始使用 Web UI。
+
+### Web UI 功能
+
+- ✨ 现代化响应式界面
+- 📁 文件拖拽上传（图像和视频）
+- 🤖 多模型支持
+- 🎯 检测选项配置（无人帧筛除、静态帧筛除、帧间隔）
+- 📊 实时检测日志显示
+- 📥 结果文件下载
+
+详见 [web/README.md](web/README.md)
+
+## 4.1 启动推理（PyQt5 GUI - 已弃用）
+
+如需使用旧的 PyQt5 图形界面：
+
+```bash
+cd fall_detection
 python main.py
 ```
 

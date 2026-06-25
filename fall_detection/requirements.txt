@@ -11,3 +11,6 @@ ultralytics>=8.4.76,<9.0
 opencv-python>=4.10.0,<5.0
 PyQt5>=5.15.10,<5.16
 numpy>=1.26.0,<3.0
+Flask>=2.3.0,<4.0
+flask-cors>=4.0.0,<5.0
+Werkzeug>=2.3.0,<4.0
