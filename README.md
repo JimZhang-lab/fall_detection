@@ -58,15 +58,15 @@ numpy>=1.26.0,<3.0
 
 真实测试机/交付机推荐版本：
 
-| 依赖 | 推荐版本 | 说明 |
-| --- | --- | --- |
-| Python | 3.11.x 或 3.12.x | 真实交付优先 3.11.x；新环境/YOLO26 实验可用 3.12.x。 |
-| PyTorch | 2.3.0 及以上，低于 3.0 | YOLOv8 可用；YOLO26 实验建议 2.7+ CUDA 版。 |
-| torchvision | 0.18.0 及以上，低于 1.0 | 与 PyTorch 匹配安装。 |
-| ultralytics | 8.4.76 及以上，低于 9.0 | YOLOv8/YOLO26 训练推理框架，建议使用较新的 8.x。 |
-| opencv-python | 4.10.0 及以上，低于 5.0 | 视频读写、图像处理、结果显示。 |
-| PyQt5 | 5.15.10 及以上，低于 5.16 | GUI 界面依赖，保持在 PyQt5 5.15.x。 |
-| numpy | 1.26.0 及以上，低于 3.0 | 图像/数组处理，兼容 OpenCV 和 Ultralytics。 |
+| 依赖          | 推荐版本                  | 说明                                                 |
+| ------------- | ------------------------- | ---------------------------------------------------- |
+| Python        | 3.11.x 或 3.12.x          | 真实交付优先 3.11.x；新环境/YOLO26 实验可用 3.12.x。 |
+| PyTorch       | 2.3.0 及以上，低于 3.0    | YOLOv8 可用；YOLO26 实验建议 2.7+ CUDA 版。          |
+| torchvision   | 0.18.0 及以上，低于 1.0   | 与 PyTorch 匹配安装。                                |
+| ultralytics   | 8.4.76 及以上，低于 9.0   | YOLOv8/YOLO26 训练推理框架，建议使用较新的 8.x。     |
+| opencv-python | 4.10.0 及以上，低于 5.0   | 视频读写、图像处理、结果显示。                       |
+| PyQt5         | 5.15.10 及以上，低于 5.16 | GUI 界面依赖，保持在 PyQt5 5.15.x。                  |
+| numpy         | 1.26.0 及以上，低于 3.0   | 图像/数组处理，兼容 OpenCV 和 Ultralytics。          |
 
 如果使用 NVIDIA GPU，请先按 CUDA 版本安装支持 GPU 的 PyTorch，再安装项目依赖。例如 CUDA 12.8：
 
@@ -116,14 +116,14 @@ DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 但为了正常演示和训练，建议按下面配置准备。
 
-| 用途 | 最低配置 | 推荐配置 | 说明 |
-| --- | --- | --- | --- |
-| 图片推理/短视频演示 | NVIDIA 4GB 显存，例如 GTX 1050 Ti 4GB、GTX 1650 4GB | RTX 3050 6GB/8GB、RTX 4060 8GB | CPU 也能启动，但视频检测会慢。 |
-| 视频推理 + 无人帧筛除 | NVIDIA 4GB 显存可跑，6GB 更稳 | RTX 3050 6GB/8GB、RTX 3060 12GB、RTX 4060 8GB | 无人帧筛除会额外加载 `assets/yolov8n.pt`。 |
-| YOLOv8n/YOLO26n 训练 | NVIDIA 6GB 显存，例如 GTX 1660 6GB、RTX 2060 6GB、RTX 3050 6GB | RTX 3060 12GB、RTX 4070 12GB、RTX 4060 Ti 16GB | 6GB 训练时建议 `batch=4` 或 `batch=8`。 |
-| 默认 `batch=16` 训练 | NVIDIA 8GB 显存起步 | 12GB 显存更稳 | 当前默认训练命令使用 `--batch 16`。 |
-| YOLO26s 或更大模型训练 | 8GB-12GB 起步 | 12GB-16GB 以上 | YOLO26s 比 YOLO26n 明显更大。 |
-| 多路摄像头/长期部署 | 不建议 4GB | RTX 3060 12GB、RTX 4060 Ti 16GB、RTX 4070 12GB 或 Jetson Orin 系列 | 需要考虑多路视频、解码、日志和告警。 |
+| 用途                   | 最低配置                                                       | 推荐配置                                                           | 说明                                        |
+| ---------------------- | -------------------------------------------------------------- | ------------------------------------------------------------------ | ------------------------------------------- |
+| 图片推理/短视频演示    | NVIDIA 4GB 显存，例如 GTX 1050 Ti 4GB、GTX 1650 4GB            | RTX 3050 6GB/8GB、RTX 4060 8GB                                     | CPU 也能启动，但视频检测会慢。              |
+| 视频推理 + 无人帧筛除  | NVIDIA 4GB 显存可跑，6GB 更稳                                  | RTX 3050 6GB/8GB、RTX 3060 12GB、RTX 4060 8GB                      | 无人帧筛除会额外加载`assets/yolov8n.pt`。 |
+| YOLOv8n/YOLO26n 训练   | NVIDIA 6GB 显存，例如 GTX 1660 6GB、RTX 2060 6GB、RTX 3050 6GB | RTX 3060 12GB、RTX 4070 12GB、RTX 4060 Ti 16GB                     | 6GB 训练时建议`batch=4` 或 `batch=8`。  |
+| 默认`batch=16` 训练  | NVIDIA 8GB 显存起步                                            | 12GB 显存更稳                                                      | 当前默认训练命令使用`--batch 16`。        |
+| YOLO26s 或更大模型训练 | 8GB-12GB 起步                                                  | 12GB-16GB 以上                                                     | YOLO26s 比 YOLO26n 明显更大。               |
+| 多路摄像头/长期部署    | 不建议 4GB                                                     | RTX 3060 12GB、RTX 4060 Ti 16GB、RTX 4070 12GB 或 Jetson Orin 系列 | 需要考虑多路视频、解码、日志和告警。        |
 
 简洁结论：
 
@@ -173,6 +173,102 @@ npm run dev
 **步骤 4**：打开浏览器
 
 访问 [http://localhost:3000](http://localhost:3000) 开始使用 Web UI。
+
+### 后端 API curl 示例
+
+启动后端 API 后，可以用下面命令快速验证上传、检测和下载流程。
+
+以下示例默认后端运行在：
+
+```bash
+API_BASE="http://127.0.0.1:5000"
+```
+
+健康检查：
+
+```bash
+curl "$API_BASE/api/health"
+```
+
+查看可用模型：
+
+```bash
+curl "$API_BASE/api/models"
+```
+
+上传样例图片，并保存上传返回：
+
+```bash
+curl -s -X POST "$API_BASE/api/upload" \
+  -F "file=@/Users/jim/Desktop/extensiveWork/project/cte/inspect_issue/fall_detection/data/samples/images/people(121).jpg" \
+  -o /tmp/fall-upload-image.json
+
+cat /tmp/fall-upload-image.json
+```
+
+使用上传返回的 `file_id` 执行图片检测：
+
+```bash
+FILE_ID=$(python -c 'import json; print(json.load(open("/tmp/fall-upload-image.json"))["file_id"])')
+
+curl -s -X POST "$API_BASE/api/detect" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"file_id\": \"$FILE_ID\",
+    \"model_name\": \"mixdata-two-70-augment/best.pt\",
+    \"use_filter_person\": false,
+    \"use_filter_static\": false,
+    \"frame_interval\": 1
+  }" \
+  -o /tmp/fall-detect-image.json
+
+cat /tmp/fall-detect-image.json
+```
+
+下载图片检测结果：
+
+```bash
+DOWNLOAD_URL=$(python -c 'import json; print(json.load(open("/tmp/fall-detect-image.json"))["download_url"])')
+
+curl -L "$API_BASE$DOWNLOAD_URL" -o /tmp/fall-detect-result.jpg
+```
+
+上传样例视频：
+
+```bash
+curl -s -X POST "$API_BASE/api/upload" \
+  -F "file=@/Users/jim/Desktop/extensiveWork/project/cte/inspect_issue/fall_detection/data/samples/videos/老人跌倒1.mp4" \
+  -o /tmp/fall-upload-video.json
+
+cat /tmp/fall-upload-video.json
+```
+
+使用上传返回的 `file_id` 执行视频检测：
+
+```bash
+FILE_ID=$(python -c 'import json; print(json.load(open("/tmp/fall-upload-video.json"))["file_id"])')
+
+curl -s -X POST "$API_BASE/api/detect" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"file_id\": \"$FILE_ID\",
+    \"model_name\": \"mixdata-two-70-augment/best.pt\",
+    \"use_filter_person\": false,
+    \"use_filter_static\": false,
+    \"frame_interval\": 2
+  }" \
+  -o /tmp/fall-detect-video.json
+
+cat /tmp/fall-detect-video.json
+```
+
+下载视频检测结果：
+
+```bash
+DOWNLOAD_URL=$(python -c 'import json; print(json.load(open("/tmp/fall-detect-video.json"))["download_url"])')
+
+curl -L "$API_BASE$DOWNLOAD_URL" -o /tmp/fall-detect-result.mp4
+```
 
 ### Web UI 功能
 
@@ -358,4 +454,3 @@ fall_detection/assets/<模型名称>/best.pt
 如果训练时显存不足，优先降低 `--batch`，其次降低 `--imgsz`。
 
 如果 `torch.cuda.is_available()` 为 `False`，请重新安装与显卡 CUDA 版本匹配的 PyTorch。
-
